@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
 import Link from 'next/link';
+import { templates, getTemplate } from '../utils/templates';
 
 interface Presentation {
   _id: string;
@@ -16,7 +17,9 @@ export default function Dashboard() {
   const { user, loading, logout } = useAuth();
   const [presentations, setPresentations] = useState<Presentation[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState('blank');
   const router = useRouter();
 
   useEffect(() => {
@@ -40,14 +43,32 @@ export default function Dashboard() {
     }
   };
 
-  const createPresentation = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const showTemplateSelector = () => {
+    setShowCreateModal(false);
+    setShowTemplateModal(true);
+  };
+
+  const createPresentation = async () => {
     try {
-      const response = await api.post('/presentations', { title: newTitle });
+      const template = getTemplate(selectedTemplate);
+      const response = await api.post('/presentations', {
+        title: newTitle,
+        slides: template?.slides || [],
+        settings: template?.settings || {
+          backgroundColor: '#ffffff',
+          transition: 'slide',
+          transitionDuration: 800
+        }
+      });
       router.push(`/editor/${response.data._id}`);
     } catch (error) {
       console.error('Failed to create presentation:', error);
     }
+  };
+
+  const handleCreateSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    showTemplateSelector();
   };
 
   const deletePresentation = async (id: string) => {
@@ -147,7 +168,7 @@ export default function Dashboard() {
         <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>Create New Presentation</h3>
-            <form onSubmit={createPresentation}>
+            <form onSubmit={handleCreateSubmit}>
               <div className="form-group">
                 <label>Title</label>
                 <input
@@ -163,10 +184,48 @@ export default function Dashboard() {
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary">
-                  Create
+                  Next
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showTemplateModal && (
+        <div className="modal-overlay" onClick={() => setShowTemplateModal(false)}>
+          <div className="modal template-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Choose a Template</h3>
+            <div className="template-grid">
+              {templates.map((template) => (
+                <div
+                  key={template.id}
+                  className={`template-card ${selectedTemplate === template.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedTemplate(template.id)}
+                >
+                  <div className="template-preview">
+                    {template.name.charAt(0)}
+                  </div>
+                  <h4>{template.name}</h4>
+                  <p>{template.description}</p>
+                </div>
+              ))}
+            </div>
+            <div className="modal-actions">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowTemplateModal(false);
+                  setShowCreateModal(true);
+                }}
+                className="btn-secondary"
+              >
+                Back
+              </button>
+              <button onClick={createPresentation} className="btn-primary">
+                Create Presentation
+              </button>
+            </div>
           </div>
         </div>
       )}
