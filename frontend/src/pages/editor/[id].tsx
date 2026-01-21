@@ -74,8 +74,11 @@ export default function Editor() {
   const addSlide = (type: 'text' | 'image' | 'shape') => {
     if (!presentation) return;
 
+    // Generate a unique ID using timestamp and random number
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     const newSlide: Slide = {
-      id: Date.now().toString(),
+      id: uniqueId,
       type,
       content: type === 'text' ? 'Double-click to edit' : type === 'shape' ? { width: 100, height: 100, fill: '#3498db' } : '',
       position: { x: 0, y: 0, z: 0 },

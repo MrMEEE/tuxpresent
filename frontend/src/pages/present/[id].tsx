@@ -85,6 +85,9 @@ export default function Present() {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      
+      // Clean up the URL object to prevent memory leaks
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to export PDF:', error);
       alert('Failed to export PDF');

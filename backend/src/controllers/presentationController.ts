@@ -4,14 +4,19 @@ import Presentation from '../models/Presentation';
 
 export const createPresentation = async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, template } = req.body;
+    const { title, description, template, slides, settings } = req.body;
 
     const presentation = await Presentation.create({
       title,
       description,
       template,
       owner: req.user._id,
-      slides: []
+      slides: slides || [],
+      settings: settings || {
+        backgroundColor: '#ffffff',
+        transition: 'slide',
+        transitionDuration: 800
+      }
     });
 
     res.status(201).json(presentation);
